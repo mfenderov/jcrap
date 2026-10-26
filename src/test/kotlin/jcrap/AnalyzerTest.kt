@@ -25,6 +25,16 @@ class AnalyzerTest {
     assertTrue(formatReport(analyze(emptyList(), max = 10.0, exclude = emptyList())).contains("no methods"))
   }
 
+  @Test fun `hidden passing rows still count in summary`() {
+    val stats =
+      statsWithLambdaAndPlain() +
+        MethodStat("com/example/A", "trivial", 20, complexity = 2, covered = 10, missed = 0)
+    val rows = analyze(stats, max = 10.0, exclude = emptyList())
+    val report = formatReport(rows, showAll = false)
+    assertTrue(!report.contains("trivial"), "passing rows stay hidden")
+    assertTrue(report.contains("Above threshold: 1 of 2"))
+  }
+
   @Test fun `exclude globs drop matching classes`() {
     val stats =
       listOf(

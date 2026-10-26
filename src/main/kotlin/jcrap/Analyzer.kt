@@ -33,11 +33,15 @@ private fun globToRegex(glob: String): String {
   return out.append("$").toString()
 }
 
-/** gocrap-style column table plus Average CRAP / Above-threshold summary. */
-fun formatReport(rows: List<Row>): String {
+/** gocrap-style column table plus Average CRAP / Above-threshold summary.
+ * Display honors showAll (violations only otherwise); the summary always
+ * counts the full analyzed set so "F of N" stays truthful. */
+fun formatReport(rows: List<Row>, showAll: Boolean = true): String {
   if (rows.isEmpty()) return "no methods to report"
+  val shown = if (showAll) rows else rows.filter { it.failed }
+  if (shown.isEmpty()) return "no methods to report"
   val lines = mutableListOf("CRAP   COVERAGE   COMPLEXITY   LOCATION")
-  for (row in rows) {
+  for (row in shown) {
     val mark = if (row.failed) "  FAIL" else ""
     lines +=
       String.format(

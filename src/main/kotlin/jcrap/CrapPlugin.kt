@@ -48,8 +48,7 @@ abstract class CrapCheckTask : DefaultTask() {
         throw GradleException("malformed JaCoCo XML ($report): ${e.message}", e)
       }
     val rows = analyze(parsed, max.get(), exclude.get())
-    val shown = if (showAll.get()) rows else rows.filter { it.failed }
-    println(formatReport(shown))
+    println(formatReport(rows, showAll.get()))
     val failed = rows.filter { it.failed }
     if (failed.isNotEmpty()) {
       val violations = failed.joinToString("\n") { String.format(Locale.US, "%.2f %s::%s", it.crap, it.stat.className, it.stat.method) }
