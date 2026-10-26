@@ -32,5 +32,7 @@ tasks.test {
 }
 
 kotlin {
-  jvmToolchain(25)
+  // Keep the plugin loadable by older daemons: lowest toolchain available
+  // on this machine (a 25 toolchain forces every consumer's daemon onto 25+).
+  jvmToolchain(21)
 }
