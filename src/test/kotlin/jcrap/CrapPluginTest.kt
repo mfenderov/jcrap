@@ -98,4 +98,18 @@ class CrapPluginTest {
     val out = stdoutOf { task.check() }
     assertTrue(!out.contains("tidy"))
   }
+
+  @Test fun `exclude defaults to empty`() {
+    val project = ProjectBuilder.builder().build()
+    project.pluginManager.apply(CrapPlugin::class.java)
+    val ext = project.extensions.getByType(CrapExtension::class.java)
+    assertEquals(emptyList(), ext.exclude.get())
+  }
+
+  @Test fun `crapCheck honors exclude globs`() {
+    val task = checkTaskWith(FAILING_XML, max = 30.0)
+    task.exclude.set(listOf("*Messy*"))
+    val out = stdoutOf { task.check() }
+    assertTrue(out.contains("no methods"), "excluded method should not fail the build")
+  }
 }

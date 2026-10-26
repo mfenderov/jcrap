@@ -7,6 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -18,6 +19,7 @@ import org.gradle.api.tasks.TaskAction
 abstract class CrapExtension @Inject constructor(objects: ObjectFactory) {
   val max: Property<Double> = objects.property(Double::class.java).convention(30.0)
   val showAll: Property<Boolean> = objects.property(Boolean::class.java).convention(false)
+  val exclude: ListProperty<String> = objects.listProperty(String::class.java).convention(emptyList())
   val report: RegularFileProperty = objects.fileProperty()
 }
 
@@ -31,10 +33,12 @@ abstract class CrapCheckTask : DefaultTask() {
 
   @get:Input abstract val showAll: Property<Boolean>
 
+  @get:Input abstract val exclude: ListProperty<String>
+
   @TaskAction
   fun check() {
     val xml = reportFile.asFile.get().readText()
-    val rows = analyze(parseJacocoXml(xml), max.get(), exclude = emptyList())
+    val rows = analyze(parseJacocoXml(xml), max.get(), exclude.get())
     val shown = if (showAll.get()) rows else rows.filter { it.failed }
     println(formatReport(shown))
     val failed = rows.filter { it.failed }
@@ -52,6 +56,7 @@ class CrapPlugin : Plugin<Project> {
       task.reportFile.convention(extension.report)
       task.max.convention(extension.max)
       task.showAll.convention(extension.showAll)
+      task.exclude.convention(extension.exclude)
     }
   }
 }
