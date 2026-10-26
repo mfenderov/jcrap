@@ -27,4 +27,29 @@ class JacocoXmlTest {
     val e = assertFailsWith<IllegalArgumentException> { parseJacocoXml("<not xml") }
     assertTrue(e.message!!.contains("malformed JaCoCo XML"), "message was: ${e.message}")
   }
+
+  @Test fun `real-world doctype report parses`() {
+    // Real JaCoCo XML always carries this DOCTYPE; the parser must accept it.
+    val xml =
+      sampleXml()
+        .replaceFirst(
+          "<report ",
+          "<!DOCTYPE report PUBLIC \"-//JACOCO//DTD Report 1.1//EN\" \"report.dtd\"><report ",
+        )
+    val stats = parseJacocoXml(xml)
+    assertEquals(3, stats.size)
+    assertEquals(MethodStat("com/example/Drive", "describe", 21, 8, 90, 10), stats.first())
+  }
+
+  @Test fun `external entity is rejected not expanded`() {
+    val xml =
+      """<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE report [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+      <report name="evil"><package name="p"><class name="p/Evil" sourcefilename="Evil.kt">""" +
+        """<method name="&xxe;" line="1"><counter type="COMPLEXITY" missed="0" covered="1"/>""" +
+        """<counter type="INSTRUCTION" missed="0" covered="1"/></method>""" +
+        "</class></package></report>"
+    val e = assertFailsWith<IllegalArgumentException> { parseJacocoXml(xml) }
+    assertTrue(e.message!!.contains("malformed JaCoCo XML"), "message was: ${e.message}")
+  }
 }

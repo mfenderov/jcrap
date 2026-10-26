@@ -10,7 +10,11 @@ fun parseJacocoXml(xml: String): List<MethodStat> {
   val doc =
     try {
       val factory = DocumentBuilderFactory.newInstance()
-      factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+      // Real JaCoCo reports carry a DOCTYPE, so allow it but neutralize XXE:
+      // no external entities, no external DTD, no XInclude, no expansion.
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
       factory.isXIncludeAware = false
       factory.isExpandEntityReferences = false
       factory.newDocumentBuilder().parse(InputSource(StringReader(xml)))
