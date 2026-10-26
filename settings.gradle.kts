@@ -1,1 +1,1 @@
-rootProject.name = "jvmcrap"
+rootProject.name = "jcrap"

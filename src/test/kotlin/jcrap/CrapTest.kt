@@ -1,4 +1,4 @@
-package jvmcrap
+package jcrap
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

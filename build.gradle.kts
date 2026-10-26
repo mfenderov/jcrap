@@ -2,7 +2,7 @@ plugins {
   kotlin("jvm") version "2.4.21"
 }
 
-group = "jvmcrap"
+group = "jcrap"
 version = "0.1.0-SNAPSHOT"
 
 repositories {

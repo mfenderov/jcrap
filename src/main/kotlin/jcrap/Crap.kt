@@ -1,4 +1,4 @@
-package jvmcrap
+package jcrap
 
 data class MethodStat(
   val className: String,
