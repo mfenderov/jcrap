@@ -161,6 +161,6 @@ that deserves either error-path tests or extraction.
 
 ## Go sibling
 
-`gocrap` is the Go sibling: same CRAP formula, same violations-first table,
+[`gocrap`](https://github.com/mfenderov/gocrap) is the Go sibling: same CRAP formula, same violations-first table,
 same threshold-gates-the-build contract — Go AST plus `go test -cover` on that
 side, JaCoCo XML on this one.
