@@ -62,7 +62,7 @@ tasks.jacocoTestReport {
 ./gradlew test jacocoTestReport
 ```
 
-2. Point `crap` at the report:
+2. Point `crap` at the report (optional — defaults to the standard JaCoCo path):
 
 ```kotlin
 plugins {
@@ -79,7 +79,7 @@ crap {
 
 | Setting   | Default | Meaning                                                    |
 |-----------|---------|------------------------------------------------------------|
-| `report`  | —       | JaCoCo XML file to score. Required.                        |
+| `report`  | `build/reports/jacoco/test/jacocoTestReport.xml` | JaCoCo XML file to score. |
 | `max`     | `30.0`  | Methods with CRAP above this fail the build.               |
 | `showAll` | `false` | Print passing methods too; default prints only violations. |
 | `exclude` | `[]`    | Glob filters (`*`, `?`) matched against class/method names.|

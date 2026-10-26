@@ -112,4 +112,27 @@ class CrapPluginTest {
     val out = stdoutOf { task.check() }
     assertTrue(out.contains("no methods"), "excluded method should not fail the build")
   }
+
+  @Test fun `malformed xml failure names the report file`() {
+    val task = checkTaskWith("<not xml", max = 30.0)
+    val reportPath = task.reportFile.asFile.get().path
+    val error = assertFailsWith<org.gradle.api.GradleException> { task.check() }
+    assertTrue(error.message!!.contains(reportPath), "message was: ${error.message}")
+  }
+
+  @Test fun `report defaults to the standard jacoco location`() {
+    val dir = java.nio.file.Files.createTempDirectory("jcrap-default-report").toFile()
+    try {
+      val project = ProjectBuilder.builder().withProjectDir(dir).build()
+      project.pluginManager.apply(CrapPlugin::class.java)
+      val task = project.tasks.getByName("crapCheck") as CrapCheckTask
+      val path = task.reportFile.get().asFile.path.replace('\\', '/')
+      assertTrue(
+        path.endsWith("reports/jacoco/test/jacocoTestReport.xml"),
+        "default report path was: $path",
+      )
+    } finally {
+      dir.deleteRecursively()
+    }
+  }
 }

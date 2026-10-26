@@ -1,5 +1,6 @@
 package jcrap
 
+import java.util.Locale
 import javax.inject.Inject
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -14,6 +15,7 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 /** Thresholds and inputs for the `crapCheck` task. */
 abstract class CrapExtension @Inject constructor(objects: ObjectFactory) {
@@ -24,6 +26,7 @@ abstract class CrapExtension @Inject constructor(objects: ObjectFactory) {
 }
 
 /** Reads a JaCoCo XML report, prints the CRAP report, fails the build over threshold. */
+@DisableCachingByDefault(because = "writes the CRAP report to the console")
 abstract class CrapCheckTask : DefaultTask() {
   @get:InputFile
   @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -37,13 +40,19 @@ abstract class CrapCheckTask : DefaultTask() {
 
   @TaskAction
   fun check() {
-    val xml = reportFile.asFile.get().readText()
-    val rows = analyze(parseJacocoXml(xml), max.get(), exclude.get())
+    val report = reportFile.asFile.get()
+    val parsed =
+      try {
+        parseJacocoXml(report.readText())
+      } catch (e: IllegalArgumentException) {
+        throw GradleException("malformed JaCoCo XML ($report): ${e.message}", e)
+      }
+    val rows = analyze(parsed, max.get(), exclude.get())
     val shown = if (showAll.get()) rows else rows.filter { it.failed }
     println(formatReport(shown))
     val failed = rows.filter { it.failed }
     if (failed.isNotEmpty()) {
-      val violations = failed.joinToString("\n") { "%.2f %s::%s".format(it.crap, it.stat.className, it.stat.method) }
+      val violations = failed.joinToString("\n") { String.format(Locale.US, "%.2f %s::%s", it.crap, it.stat.className, it.stat.method) }
       throw GradleException("CRAP threshold exceeded (max ${max.get()}):\n$violations")
     }
   }
@@ -52,6 +61,7 @@ abstract class CrapCheckTask : DefaultTask() {
 class CrapPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     val extension = project.extensions.create("crap", CrapExtension::class.java)
+    extension.report.convention(project.layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml"))
     project.tasks.register("crapCheck", CrapCheckTask::class.java) { task ->
       task.reportFile.convention(extension.report)
       task.max.convention(extension.max)

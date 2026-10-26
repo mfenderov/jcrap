@@ -35,4 +35,14 @@ class AnalyzerTest {
     assertEquals(1, rows.size)
     assertEquals("com/example/Keep", rows.single().stat.className)
   }
+
+  @Test fun `crap exactly at max passes, just over fails`() {
+    // complexity 1 at 0% coverage scores exactly 2.0 (1^2 x 1^3 + 1).
+    val stats = listOf(MethodStat("com/example/A", "f", 1, complexity = 1, covered = 0, missed = 10))
+    val atMax = analyze(stats, max = 2.0, exclude = emptyList())
+    assertEquals(1, atMax.size)
+    assertEquals(false, atMax.single().failed)
+    val overMax = analyze(stats, max = 1.99, exclude = emptyList())
+    assertEquals(true, overMax.single().failed)
+  }
 }
