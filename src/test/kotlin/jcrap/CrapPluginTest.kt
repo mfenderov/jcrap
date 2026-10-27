@@ -3,6 +3,7 @@ package jcrap
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.api.tasks.TaskProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -77,7 +78,8 @@ class CrapPluginTest {
   @Test fun `crapCheck passes when all methods under threshold`() {
     val task = checkTaskWith(PASSING_XML, max = 30.0)
     val out = stdoutOf { task.check() }
-    assertTrue(out.contains("no methods"))
+    assertTrue(out.contains("no violations"))
+    assertTrue(out.contains("Above threshold: 0 of 1"))
   }
 
   @Test fun `showAll true prints passing methods with summary`() {
@@ -120,6 +122,20 @@ class CrapPluginTest {
     assertTrue(error.message!!.contains(reportPath), "message was: ${error.message}")
   }
 
+  @Test fun `missing report names file and fix`() {
+    val task = checkTaskWith(PASSING_XML)
+    task.reportFile.set(java.io.File("/tmp/does-not-exist-jcrap.xml"))
+    val err = assertFailsWith<org.gradle.api.GradleException> { task.check() }
+    assertTrue(err.message!!.contains("not found"))
+    assertTrue(err.message!!.contains("/tmp/does-not-exist-jcrap.xml"))
+  }
+
+  @Test fun `malformed prefix appears once`() {
+    val task = checkTaskWith("<not xml")
+    val err = assertFailsWith<org.gradle.api.GradleException> { task.check() }
+    assertEquals(1, err.message!!.split("malformed JaCoCo XML").size - 1)
+  }
+
   @Test fun `report defaults to the standard jacoco location`() {
     val dir = java.nio.file.Files.createTempDirectory("jcrap-default-report").toFile()
     try {
@@ -134,5 +150,13 @@ class CrapPluginTest {
     } finally {
       dir.deleteRecursively()
     }
+  }
+
+  @Test fun `crapCheck wired into check`() {
+    val project = ProjectBuilder.builder().build()
+    project.pluginManager.apply(CrapPlugin::class.java)
+    project.pluginManager.apply("lifecycle-base")
+    val check = project.tasks.findByName("check")
+    assertTrue(check!!.dependsOn.any { (it as? TaskProvider<*>)?.name=="crapCheck" || it.toString().contains("crapCheck") })
   }
 }

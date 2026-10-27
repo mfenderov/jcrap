@@ -19,7 +19,7 @@ fun parseJacocoXml(xml: String): List<MethodStat> {
       factory.isExpandEntityReferences = false
       factory.newDocumentBuilder().parse(InputSource(StringReader(xml)))
     } catch (e: Exception) {
-      throw IllegalArgumentException("malformed JaCoCo XML: ${e.message}", e)
+      throw IllegalArgumentException(e.message, e)
     }
   doc.documentElement.normalize()
   val stats = mutableListOf<MethodStat>()

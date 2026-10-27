@@ -3,6 +3,7 @@ package jcrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class JacocoXmlTest {
@@ -25,7 +26,10 @@ class JacocoXmlTest {
 
   @Test fun `malformed xml fails with named problem`() {
     val e = assertFailsWith<IllegalArgumentException> { parseJacocoXml("<not xml") }
-    assertTrue(e.message!!.contains("malformed JaCoCo XML"), "message was: ${e.message}")
+    // Friendly "malformed JaCoCo XML" prefix is added only by CrapCheckTask; the parser
+    // propagates the raw cause message here.
+    assertTrue(!e.message.isNullOrBlank(), "message was: ${e.message}")
+    assertFalse(e.message!!.contains("malformed JaCoCo XML"), "message was: ${e.message}")
   }
 
   @Test fun `real-world doctype report parses`() {
@@ -50,6 +54,8 @@ class JacocoXmlTest {
         """<counter type="INSTRUCTION" missed="0" covered="1"/></method>""" +
         "</class></package></report>"
     val e = assertFailsWith<IllegalArgumentException> { parseJacocoXml(xml) }
-    assertTrue(e.message!!.contains("malformed JaCoCo XML"), "message was: ${e.message}")
+    // Friendly prefix lives in CrapCheckTask; here the raw parser message must survive.
+    assertTrue(!e.message.isNullOrBlank(), "message was: ${e.message}")
+    assertFalse(e.message!!.contains("malformed JaCoCo XML"), "message was: ${e.message}")
   }
 }

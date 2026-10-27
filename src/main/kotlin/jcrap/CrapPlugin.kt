@@ -41,6 +41,7 @@ abstract class CrapCheckTask : DefaultTask() {
   @TaskAction
   fun check() {
     val report = reportFile.asFile.get()
+    if (!report.isFile) throw GradleException("JaCoCo report not found ($report). Run test jacocoTestReport first.")
     val parsed =
       try {
         parseJacocoXml(report.readText())
@@ -67,5 +68,12 @@ class CrapPlugin : Plugin<Project> {
       task.showAll.convention(extension.showAll)
       task.exclude.convention(extension.exclude)
     }
+    fun wireCheck() {
+      if (project.tasks.findByName("check") != null) {
+        project.tasks.named("check") { it.dependsOn("crapCheck") }
+      }
+    }
+    wireCheck()
+    project.plugins.withId("lifecycle-base") { wireCheck() }
   }
 }

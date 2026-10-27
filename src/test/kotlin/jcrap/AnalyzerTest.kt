@@ -35,6 +35,13 @@ class AnalyzerTest {
     assertTrue(report.contains("Above threshold: 1 of 2"))
   }
 
+  @Test fun `clean report keeps summary when hidden`() {
+    val rows = analyze(listOf(MethodStat("com/example/A","trivial",20,2,10,0)), max=10.0, exclude=emptyList())
+    val report = formatReport(rows, showAll=false)
+    assertTrue(report.contains("Above threshold: 0 of 1"))
+    assertTrue(report.contains("Average CRAP"))
+  }
+
   @Test fun `exclude globs drop matching classes`() {
     val stats =
       listOf(
@@ -44,6 +51,21 @@ class AnalyzerTest {
     val rows = analyze(stats, max = null, exclude = listOf("com/example/Gen*"))
     assertEquals(1, rows.size)
     assertEquals("com/example/Keep", rows.single().stat.className)
+  }
+
+  @Test fun `dot-form class matched by slash glob`() {
+    val stats = listOf(MethodStat("com.example.Gen","a",1,6,0,10))
+    assertEquals(0, analyze(stats, max=null, exclude=listOf("com/example/Gen*")).size)
+  }
+
+  @Test fun `accessor synthetic filtered, invokeSuspend kept`() {
+    val stats = listOf(
+      MethodStat("com/example/A","access\$getFoo",1,2,0,10),
+      MethodStat("com/example/A","invokeSuspend",1,6,0,10)
+    )
+    val rows = analyze(stats, max=null, exclude=emptyList())
+    assertTrue(rows.none { it.stat.method.contains("access\$") })
+    assertTrue(rows.any { it.stat.method=="invokeSuspend" })
   }
 
   @Test fun `crap exactly at max passes, just over fails`() {

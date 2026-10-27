@@ -6,10 +6,10 @@ data class Row(val stat: MethodStat, val crap: Double, val failed: Boolean)
 
 /** Filters synthetics + exclude globs, scores CRAP, sorts worst-first. */
 fun analyze(stats: List<MethodStat>, max: Double?, exclude: List<String>): List<Row> {
-  val excludeRegexes = exclude.map { Regex(globToRegex(it)) }
+  val excludeRegexes = exclude.map { Regex(globToRegex(it.replace('.', '/'))) }
   return stats
     .filter { !isSynthetic(it.method) }
-    .filter { stat -> excludeRegexes.none { it.matches(stat.className) || it.matches(stat.method) } }
+    .filter { stat -> excludeRegexes.none { it.matches(stat.className.replace('.', '/')) || it.matches(stat.method) } }
     .map { stat ->
       val crap = crapScore(stat)
       Row(stat, crap, failed = max != null && crap > max)
@@ -17,8 +17,11 @@ fun analyze(stats: List<MethodStat>, max: Double?, exclude: List<String>): List<
     .sortedWith(compareByDescending<Row> { it.crap }.thenBy { it.stat.className }.thenBy { it.stat.method })
 }
 
-private fun isSynthetic(method: String): Boolean =
-  method.contains("lambda\$") || method.contains("write\$Self") || method.endsWith("\$default")
+private fun isSynthetic(method: String): Boolean {
+  if (method == "invokeSuspend") return false
+  return method.contains("lambda\$") || method.contains("write\$Self") || method.endsWith("\$default") ||
+    method.contains("access\$")
+}
 
 private fun globToRegex(glob: String): String {
   val out = StringBuilder("^")
@@ -39,7 +42,13 @@ private fun globToRegex(glob: String): String {
 fun formatReport(rows: List<Row>, showAll: Boolean = true): String {
   if (rows.isEmpty()) return "no methods to report"
   val shown = if (showAll) rows else rows.filter { it.failed }
-  if (shown.isEmpty()) return "no methods to report"
+  val avg = rows.sumOf { it.crap } / rows.size
+  val summary =
+    listOf(
+      String.format(Locale.US, "Average CRAP: %.2f", avg),
+      String.format(Locale.US, "Above threshold: %d of %d", rows.count { it.failed }, rows.size),
+    )
+  if (shown.isEmpty()) return (listOf("no violations") + summary).joinToString("\n")
   val lines = mutableListOf("CRAP   COVERAGE   COMPLEXITY   LOCATION")
   for (row in shown) {
     val mark = if (row.failed) "  FAIL" else ""
@@ -56,8 +65,6 @@ fun formatReport(rows: List<Row>, showAll: Boolean = true): String {
         mark,
       )
   }
-  val avg = rows.sumOf { it.crap } / rows.size
-  lines += String.format(Locale.US, "Average CRAP: %.2f", avg)
-  lines += String.format(Locale.US, "Above threshold: %d of %d", rows.count { it.failed }, rows.size)
+  lines += summary
   return lines.joinToString("\n")
 }
