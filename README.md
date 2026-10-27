@@ -10,26 +10,26 @@ fail-over-threshold exit) from Go to the JVM.
 Requires Gradle 9.x (a Java 17+ runtime to drive it; the Foojay toolchain
 resolver provisions the build JDK automatically).
 
-**JitPack (recommended).** No accounts, no keys — point at a git ref:
+**JitPack (recommended).** No accounts, no keys — point at a git ref.
+Verified end-to-end (resolution, analysis run, and failure path):
 
 ```kotlin
-// settings.gradle.kts
-dependencyResolutionManagement {
+// build.gradle.kts
+buildscript {
     repositories {
         mavenCentral()
         maven("https://jitpack.io")
     }
+    dependencies {
+        classpath("com.github.mfenderov:jcrap:v0.1.0")
+    }
 }
-```
-
-```kotlin
-// build.gradle.kts
-plugins {
-    id("com.github.mfenderov.jcrap") version "<tag or commit SHA>"
-}
+apply(plugin = "jcrap")
 ```
 
 Use a full commit SHA instead of a moving tag when reproducibility matters.
+Note: the `plugins { id(...) }` form does *not* work via JitPack (no plugin
+marker is published there) — use the `buildscript` + `apply` form above.
 
 **Option B — composite build (local development).** In the consumer's
 `settings.gradle.kts`:
