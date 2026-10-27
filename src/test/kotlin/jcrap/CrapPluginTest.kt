@@ -3,6 +3,7 @@ package jcrap
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.api.tasks.TaskProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -149,5 +150,13 @@ class CrapPluginTest {
     } finally {
       dir.deleteRecursively()
     }
+  }
+
+  @Test fun `crapCheck wired into check`() {
+    val project = ProjectBuilder.builder().build()
+    project.pluginManager.apply(CrapPlugin::class.java)
+    project.pluginManager.apply("lifecycle-base")
+    val check = project.tasks.findByName("check")
+    assertTrue(check!!.dependsOn.any { (it as? TaskProvider<*>)?.name=="crapCheck" || it.toString().contains("crapCheck") })
   }
 }

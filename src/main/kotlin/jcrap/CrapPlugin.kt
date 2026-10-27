@@ -68,5 +68,12 @@ class CrapPlugin : Plugin<Project> {
       task.showAll.convention(extension.showAll)
       task.exclude.convention(extension.exclude)
     }
+    fun wireCheck() {
+      if (project.tasks.findByName("check") != null) {
+        project.tasks.named("check") { it.dependsOn("crapCheck") }
+      }
+    }
+    wireCheck()
+    project.plugins.withId("lifecycle-base") { wireCheck() }
   }
 }

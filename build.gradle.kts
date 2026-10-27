@@ -24,6 +24,9 @@ gradlePlugin {
     create("jcrap") {
       id = "jcrap"
       implementationClass = "jcrap.CrapPlugin"
+      displayName = "jcrap CRAP metric check"
+      description = "Fails the build when JaCoCo-covered methods exceed the CRAP threshold."
+      website = "https://github.com/mfenderov/jcrap"
     }
   }
 }
