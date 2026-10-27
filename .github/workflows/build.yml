@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 0
       - name: Install cocogitto
         run: |
-          curl -sSL https://github.com/cocogitto/cocogitto/releases/download/7.0.0/cocogitto-7.0.0-x86_64-unknown-linux-musl.tar.gz -o /tmp/cog.tgz
+          curl -fsSL https://github.com/cocogitto/cocogitto/releases/download/7.0.0/cocogitto-7.0.0-x86_64-unknown-linux-musl.tar.gz -o /tmp/cog.tgz
           tar -xzf /tmp/cog.tgz -C /tmp
           sudo install -m 755 /tmp/x86_64-unknown-linux-musl/cog /usr/local/bin/cog
           cog --version
@@ -51,7 +51,7 @@ jobs:
           elif [ -n "$(git ls-remote --tags origin "refs/tags/$TAG")" ]; then
             echo "Tag $TAG already exists on origin; skipping."
           else
-            git push origin --tags
+            git push origin "$TAG"
           fi
       - uses: actions/setup-java@v4
         with:
@@ -67,7 +67,7 @@ jobs:
           fi
           VERSION=${TAG#v}
           echo "TAG=$TAG" >> "$GITHUB_ENV"
-          ./gradlew jar sourcesJar javadocJar -PreleaseVersion=$VERSION
+          ./gradlew jar sourcesJar javadocJar -PreleaseVersion="$VERSION"
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -82,5 +82,9 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; skipping."
             exit 0
+          fi
+          if [ -z "$(ls -A build/libs/)" ]; then
+            echo "ERROR: build/libs/ is empty; refusing to create an asset-less release."
+            exit 1
           fi
           gh release create "$TAG" --generate-notes build/libs/*
