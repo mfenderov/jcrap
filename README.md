@@ -92,7 +92,7 @@ crap {
 | `report`  | `build/reports/jacoco/test/jacocoTestReport.xml` | JaCoCo XML file to score. |
 | `max`     | `30.0`  | Methods with CRAP above this fail the build.               |
 | `showAll` | `false` | Print passing methods too; default prints only violations. |
-| `exclude` | `[]`    | Glob filters (`*`, `?`) matched against class/method names; `.` and `/` forms match interchangeably.|
+| `exclude` | `[]`    | Glob filters (`*`, `?`) matched against class/method names; class-name globs match `.` and `/` forms interchangeably, method-name globs use raw JaCoCo names.|
 
 3. Run it:
 
@@ -140,7 +140,7 @@ Inputs come from JaCoCo method counters:
 
 ## Behavior notes
 
-- Synthetic methods (`lambda$…`, `write$Self`, `…$default`) are filtered out;
+- Synthetic methods (`lambda$…`, `write$Self`, `…$default`, `access$…`) are filtered out;
   coroutine state machines (`invokeSuspend`) are kept — they are real logic.
 - Rows sort worst-first; `FAIL` marks methods over `max`.
 - Empty input prints `no methods to report` instead of an empty table.
