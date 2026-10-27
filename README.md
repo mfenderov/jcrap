@@ -92,7 +92,7 @@ crap {
 | `report`  | `build/reports/jacoco/test/jacocoTestReport.xml` | JaCoCo XML file to score. |
 | `max`     | `30.0`  | Methods with CRAP above this fail the build.               |
 | `showAll` | `false` | Print passing methods too; default prints only violations. |
-| `exclude` | `[]`    | Glob filters (`*`, `?`) matched against class/method names.|
+| `exclude` | `[]`    | Glob filters (`*`, `?`) matched against class/method names; `.` and `/` forms match interchangeably.|
 
 3. Run it:
 

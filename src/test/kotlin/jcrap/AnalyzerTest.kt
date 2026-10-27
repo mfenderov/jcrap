@@ -53,6 +53,21 @@ class AnalyzerTest {
     assertEquals("com/example/Keep", rows.single().stat.className)
   }
 
+  @Test fun `dot-form class matched by slash glob`() {
+    val stats = listOf(MethodStat("com.example.Gen","a",1,6,0,10))
+    assertEquals(0, analyze(stats, max=null, exclude=listOf("com/example/Gen*")).size)
+  }
+
+  @Test fun `accessor synthetic filtered, invokeSuspend kept`() {
+    val stats = listOf(
+      MethodStat("com/example/A","access\$getFoo",1,2,0,10),
+      MethodStat("com/example/A","invokeSuspend",1,6,0,10)
+    )
+    val rows = analyze(stats, max=null, exclude=emptyList())
+    assertTrue(rows.none { it.stat.method.contains("access\$") })
+    assertTrue(rows.any { it.stat.method=="invokeSuspend" })
+  }
+
   @Test fun `crap exactly at max passes, just over fails`() {
     // complexity 1 at 0% coverage scores exactly 2.0 (1^2 x 1^3 + 1).
     val stats = listOf(MethodStat("com/example/A", "f", 1, complexity = 1, covered = 0, missed = 10))
