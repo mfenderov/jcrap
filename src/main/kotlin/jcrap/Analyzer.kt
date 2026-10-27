@@ -39,7 +39,13 @@ private fun globToRegex(glob: String): String {
 fun formatReport(rows: List<Row>, showAll: Boolean = true): String {
   if (rows.isEmpty()) return "no methods to report"
   val shown = if (showAll) rows else rows.filter { it.failed }
-  if (shown.isEmpty()) return "no methods to report"
+  val avg = rows.sumOf { it.crap } / rows.size
+  val summary =
+    listOf(
+      String.format(Locale.US, "Average CRAP: %.2f", avg),
+      String.format(Locale.US, "Above threshold: %d of %d", rows.count { it.failed }, rows.size),
+    )
+  if (shown.isEmpty()) return (listOf("no violations") + summary).joinToString("\n")
   val lines = mutableListOf("CRAP   COVERAGE   COMPLEXITY   LOCATION")
   for (row in shown) {
     val mark = if (row.failed) "  FAIL" else ""
@@ -56,8 +62,6 @@ fun formatReport(rows: List<Row>, showAll: Boolean = true): String {
         mark,
       )
   }
-  val avg = rows.sumOf { it.crap } / rows.size
-  lines += String.format(Locale.US, "Average CRAP: %.2f", avg)
-  lines += String.format(Locale.US, "Above threshold: %d of %d", rows.count { it.failed }, rows.size)
+  lines += summary
   return lines.joinToString("\n")
 }

@@ -77,7 +77,8 @@ class CrapPluginTest {
   @Test fun `crapCheck passes when all methods under threshold`() {
     val task = checkTaskWith(PASSING_XML, max = 30.0)
     val out = stdoutOf { task.check() }
-    assertTrue(out.contains("no methods"))
+    assertTrue(out.contains("no violations"))
+    assertTrue(out.contains("Above threshold: 0 of 1"))
   }
 
   @Test fun `showAll true prints passing methods with summary`() {

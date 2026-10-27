@@ -35,6 +35,13 @@ class AnalyzerTest {
     assertTrue(report.contains("Above threshold: 1 of 2"))
   }
 
+  @Test fun `clean report keeps summary when hidden`() {
+    val rows = analyze(listOf(MethodStat("com/example/A","trivial",20,2,10,0)), max=10.0, exclude=emptyList())
+    val report = formatReport(rows, showAll=false)
+    assertTrue(report.contains("Above threshold: 0 of 1"))
+    assertTrue(report.contains("Average CRAP"))
+  }
+
   @Test fun `exclude globs drop matching classes`() {
     val stats =
       listOf(
