@@ -3,6 +3,7 @@ plugins {
   `java-gradle-plugin`
   `maven-publish`
   signing
+  id("com.ncorti.ktfmt.gradle") version "0.27.0"
 }
 
 group = "com.github.mfenderov"
@@ -53,4 +54,12 @@ kotlin {
   // Keep the plugin loadable by older daemons: lowest toolchain available
   // on this machine (a 25 toolchain forces every consumer's daemon onto 25+).
   jvmToolchain(21)
+}
+
+ktfmt {
+  kotlinLangStyle()
+}
+
+if (tasks.findByName("check") != null) {
+  tasks.named("check") { dependsOn("ktfmtCheck") }
 }
