@@ -19,3 +19,72 @@ jobs:
         with:
           name: test-reports
           path: build/reports/tests/
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install cocogitto
+        run: |
+          curl -fsSL https://github.com/cocogitto/cocogitto/releases/download/7.0.0/cocogitto-7.0.0-x86_64-unknown-linux-musl.tar.gz -o /tmp/cog.tgz
+          tar -xzf /tmp/cog.tgz -C /tmp
+          sudo install -m 755 /tmp/x86_64-unknown-linux-musl/cog /usr/local/bin/cog
+          cog --version
+      - name: Bump version tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cog bump --auto
+      - name: Push tag
+        run: |
+          TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || true)
+          if [ -z "$TAG" ]; then
+            echo "No tag on HEAD; nothing to release."
+          elif [ -n "$(git ls-remote --tags origin "refs/tags/$TAG")" ]; then
+            echo "Tag $TAG already exists on origin; skipping."
+          else
+            git push origin "$TAG"
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v3
+      - name: Build versioned jars
+        run: |
+          TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || true)
+          if [ -z "$TAG" ]; then
+            echo "No tag on HEAD; skipping jar build."
+            exit 0
+          fi
+          VERSION=${TAG#v}
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          ./gradlew jar sourcesJar javadocJar -PreleaseVersion="$VERSION"
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # gh CLI (preinstalled on ubuntu-latest runners) over a pinned
+        # third-party release action: one command, no extra dependency to pin,
+        # GITHUB_TOKEN only, auto notes from the tag range.
+        run: |
+          if [ -z "${TAG:-}" ]; then
+            echo "No tag; skipping release."
+            exit 0
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping."
+            exit 0
+          fi
+          if [ -z "$(ls -A build/libs/)" ]; then
+            echo "ERROR: build/libs/ is empty; refusing to create an asset-less release."
+            exit 1
+          fi
+          gh release create "$TAG" --generate-notes build/libs/*

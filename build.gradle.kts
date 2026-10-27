@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.mfenderov"
-version = "0.1.0"
+version = providers.gradleProperty("releaseVersion").getOrElse("0.1.0-SNAPSHOT")
 
 repositories {
   mavenCentral()
