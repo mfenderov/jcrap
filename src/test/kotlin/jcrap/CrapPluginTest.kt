@@ -120,6 +120,20 @@ class CrapPluginTest {
     assertTrue(error.message!!.contains(reportPath), "message was: ${error.message}")
   }
 
+  @Test fun `missing report names file and fix`() {
+    val task = checkTaskWith(PASSING_XML)
+    task.reportFile.set(java.io.File("/tmp/does-not-exist-jcrap.xml"))
+    val err = assertFailsWith<org.gradle.api.GradleException> { task.check() }
+    assertTrue(err.message!!.contains("not found"))
+    assertTrue(err.message!!.contains("/tmp/does-not-exist-jcrap.xml"))
+  }
+
+  @Test fun `malformed prefix appears once`() {
+    val task = checkTaskWith("<not xml")
+    val err = assertFailsWith<org.gradle.api.GradleException> { task.check() }
+    assertEquals(1, err.message!!.split("malformed JaCoCo XML").size - 1)
+  }
+
   @Test fun `report defaults to the standard jacoco location`() {
     val dir = java.nio.file.Files.createTempDirectory("jcrap-default-report").toFile()
     try {

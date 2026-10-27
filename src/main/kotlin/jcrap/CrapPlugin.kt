@@ -41,6 +41,7 @@ abstract class CrapCheckTask : DefaultTask() {
   @TaskAction
   fun check() {
     val report = reportFile.asFile.get()
+    if (!report.isFile) throw GradleException("JaCoCo report not found ($report). Run test jacocoTestReport first.")
     val parsed =
       try {
         parseJacocoXml(report.readText())
