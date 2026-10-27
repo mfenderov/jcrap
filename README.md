@@ -7,9 +7,31 @@ fail-over-threshold exit) from Go to the JVM.
 
 ## Install
 
-Requires Java 25 and Gradle 9.x on the build machine.
+Requires Gradle 9.x (a Java 17+ runtime to drive it; the Foojay toolchain
+resolver provisions the build JDK automatically).
 
-**Option A — composite build (local development).** In the consumer's
+**JitPack (recommended).** No accounts, no keys — point at a git ref:
+
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+```
+
+```kotlin
+// build.gradle.kts
+plugins {
+    id("com.github.mfenderov.jcrap") version "<tag or commit SHA>"
+}
+```
+
+Use a full commit SHA instead of a moving tag when reproducibility matters.
+
+**Option B — composite build (local development).** In the consumer's
 `settings.gradle.kts`:
 
 ```kotlin
