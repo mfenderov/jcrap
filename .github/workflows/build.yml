@@ -19,3 +19,37 @@ jobs:
         with:
           name: test-reports
           path: build/reports/tests/
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install cocogitto
+        run: |
+          curl -sSL https://github.com/cocogitto/cocogitto/releases/download/7.0.0/cocogitto-7.0.0-x86_64-unknown-linux-musl.tar.gz -o /tmp/cog.tgz
+          tar -xzf /tmp/cog.tgz -C /tmp
+          sudo install -m 755 /tmp/x86_64-unknown-linux-musl/cog /usr/local/bin/cog
+          cog --version
+      - name: Bump version tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cog bump --auto
+      - name: Push tag
+        run: |
+          TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || true)
+          if [ -z "$TAG" ]; then
+            echo "No tag on HEAD; nothing to release."
+          elif [ -n "$(git ls-remote --tags origin "refs/tags/$TAG")" ]; then
+            echo "Tag $TAG already exists on origin; skipping."
+          else
+            git push origin --tags
+          fi
