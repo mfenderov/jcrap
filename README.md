@@ -31,18 +31,6 @@ Use a full commit SHA instead of a moving tag when reproducibility matters.
 Note: the `plugins { id(...) }` form does *not* work via JitPack (no plugin
 marker is published there) — use the `buildscript` + `apply` form above.
 
-**Option B — composite build (local development).** In the consumer's
-`settings.gradle.kts`:
-
-```kotlin
-pluginManagement {
-    includeBuild("../jcrap")
-}
-```
-
-then `plugins { id("jcrap") }` in the module build file. This is how the
-project dogfoods itself.
-
 **Option B — mavenLocal.** In `jcrap`:
 
 ```bash
