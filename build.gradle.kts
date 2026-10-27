@@ -2,10 +2,11 @@ plugins {
   kotlin("jvm") version "2.4.21"
   `java-gradle-plugin`
   `maven-publish`
+  signing
 }
 
-group = "jcrap"
-version = "0.1.0-SNAPSHOT"
+group = "io.github.mfenderov"
+version = "0.1.0"
 
 repositories {
   mavenCentral()
@@ -24,6 +25,20 @@ gradlePlugin {
       id = "jcrap"
       implementationClass = "jcrap.CrapPlugin"
     }
+  }
+}
+
+java {
+  withSourcesJar()
+  withJavadocJar()
+}
+
+signing {
+  // Signs only when a key is provided (release CI). Local builds stay green.
+  val privateKey = System.getenv("GPG_PRIVATE_KEY")
+  if (!privateKey.isNullOrBlank()) {
+    useInMemoryPgpKeys(privateKey, System.getenv("GPG_PASSPHRASE").orEmpty())
+    sign(publishing.publications)
   }
 }
 
